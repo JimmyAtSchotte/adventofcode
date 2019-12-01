@@ -1,7 +1,8 @@
 ﻿using adventofcode.Interfaces;
 using Autofac;
-using System;
-using System.Linq;
+using Autofac.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
 namespace adventofcode
@@ -10,39 +11,34 @@ namespace adventofcode
     {
         static void Main(string[] args)
         {
+            var configuration = ConfigureConfiguration();
+
+            ConfigureContainer(ConfigureServices(configuration))
+                .Resolve<IChallangeSelector>()
+                .Select()
+                .Execute();
+        }
+
+        static ServiceCollection ConfigureServices(IConfiguration configuration)
+        {
+            var services = new ServiceCollection();
+            return services;
+        }
+
+        static IContainer ConfigureContainer(IServiceCollection services)
+        {            
             var builder = new ContainerBuilder();
-                builder.RegisterAssemblyTypes(Assembly.GetExecutingAssembly())
-                .AsImplementedInterfaces();
+            builder.Populate(services);
+            builder.RegisterAssemblyTypes(Assembly.GetExecutingAssembly()).AsImplementedInterfaces();
+            return builder.Build();
+        }
 
-            var container = builder.Build();
+        static IConfiguration ConfigureConfiguration()
+        {
+            var builder = new ConfigurationBuilder()
+                 .AddJsonFile($"inputs.2019.json", optional: true, reloadOnChange: false);
 
-            var challanges = container.Resolve<IChallange[]>()
-                .ToList()
-                .OrderByDescending(x => x.Year)
-                .ThenByDescending(x => x.Day)
-                .ToArray();
-
-            while(true)
-            {
-                for (int i = 0; i < challanges.Length; i++)
-                {
-                    Console.WriteLine($"[{i}] { challanges[i].Year } - Day { challanges[i].Day }");
-                }
-
-                Console.Write("Select challange: ");
-                var input = Console.ReadLine();
-
-                if (input == "exit")
-                    break;
-
-                if (int.TryParse(input, out var index) && index < challanges.Length)
-                {
-                    challanges[index].Execute();
-                    break;
-                }
-
-                Console.WriteLine($"Bad input: {input }, try again");
-            }
+            return builder.Build();
         }
     }
 }

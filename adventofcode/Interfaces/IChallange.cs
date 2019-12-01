@@ -8,6 +8,7 @@ namespace adventofcode.Interfaces
     {
         int Year { get; }
         int Day { get; }
+        int Part { get; }
         
         void Execute();
     }
